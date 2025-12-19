@@ -1,9 +1,9 @@
-import express from 'express'
+import express from "express";
+import authRoutes from "./routes/auth.routes.js";
 
-app.express();
+const app = express();
 
-const PORT=5000;
+app.use(express.json());
+app.use("/api/auth", authRoutes);
 
-app.listen(PORT,(res,req)=>{
-    console.log(`server ${PORT}`)
-})
+export default app;
