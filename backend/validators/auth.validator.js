@@ -7,3 +7,8 @@ export const registerSchema = z.object({
     phone: z.string().regex(/^\+?[1-9]\d{9,14}$/, "Invalid phone number"),
     interests: z.array(z.string()).optional(),
 });
+
+export const loginSchema = z.object({
+    email: z.string().email("Invalid email format"),
+    password: z.string().min(1, "Password is required"),
+});

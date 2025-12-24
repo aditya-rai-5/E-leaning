@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
 
         role: {
             type: String,
-            enum: ["student", "admin"],
+            enum: ["student", "Instructor"],
             default: "student",
         },
 
@@ -67,30 +67,45 @@ const userSchema = new mongoose.Schema(
     }
 );
 
-// Hash password before saving
-userSchema.pre("save", async function(next) {
-    // Only hash password if it's been modified (or is new)
-    if (!this.isModified("password")) {
-        return next();
-    }
+userSchema.pre("save", async function () {
+    // Skip if password not modified
+    if (!this.isModified("password")) return;
 
-    try {
-        // Hash password with cost of 12
-        const saltRounds = 12;
-        this.password = await bcrypt.hash(this.password, saltRounds);
-        next();
-    } catch (error) {
-        next(error);
-    }
+    const saltRounds = 12;
+    this.password = await bcrypt.hash(this.password, saltRounds);
 });
 
+
 // Method to check password
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
     try {
-        return await bcrypt.compare(candidatePassword, this.password);
+        console.log("Comparing passwords...");
+        console.log("Candidate password length:", candidatePassword ? candidatePassword.length : 'undefined');
+        console.log("Stored password exists:", !!this.password);
+        console.log("Stored password length:", this.password ? this.password.length : 'undefined');
+        
+        const result = await bcrypt.compare(candidatePassword, this.password);
+        console.log("Password comparison result:", result);
+        return result;
     } catch (error) {
+        console.error("Password comparison error:", error);
         throw error;
     }
+};
+
+// Debug method to check password hash
+userSchema.methods.debugPassword = function() {
+    console.log("User debug info:");
+    console.log("- Email:", this.email);
+    console.log("- Password exists:", !!this.password);
+    console.log("- Password length:", this.password ? this.password.length : 'undefined');
+    console.log("- Password hash starts with:", this.password ? this.password.substring(0, 10) : 'N/A');
+    return {
+        email: this.email,
+        hasPassword: !!this.password,
+        passwordLength: this.password ? this.password.length : 0,
+        passwordPrefix: this.password ? this.password.substring(0, 10) : 'N/A'
+    };
 };
 
 // Create indexes for better performance

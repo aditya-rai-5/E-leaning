@@ -49,3 +49,25 @@ export const restrictTo = (...roles) => {
         next();
     };
 };
+
+export const isAuth = (req, res, next) => {
+    // User is already authenticated by 'protect' middleware
+    // This middleware just ensures user exists in request
+    if (!req.user) {
+        return res.status(401).json({
+            success: false,
+            message: "Authentication required",
+        });
+    }
+    next();
+};
+
+export const isInstructor = (req, res, next) => {
+    if (req.user.role !== "instructor") {
+        return res.status(403).json({
+            success: false,
+            message: "Access denied"
+        });
+    }
+    next();
+};

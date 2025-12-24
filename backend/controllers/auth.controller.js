@@ -1,11 +1,9 @@
-
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-import { registerSchema } from "../validators/auth.validator.js";
+import { registerSchema, loginSchema } from "../validators/auth.validator.js";
 
 /**
- * Generate JWT Token
+ * Generate JWT
  */
 const generateToken = (userId) => {
     return jwt.sign(
@@ -18,9 +16,8 @@ const generateToken = (userId) => {
 };
 
 /**
- * @route   POST /api/auth/register
- * @desc    Register new user
- * @access  Public
+ * Register User
+ * POST /api/auth/register
  */
 export const registerUser = async (req, res, next) => {
     try {
@@ -36,14 +33,11 @@ export const registerUser = async (req, res, next) => {
             });
         }
 
-
-        // Hash password manually
-        const hashedPassword = await bcrypt.hash(password, 10);
-
+        // IMPORTANT: pass plain password
         const user = await User.create({
             name,
             email,
-            password: hashedPassword,
+            password,
             phone,
             interests,
         });
@@ -73,30 +67,40 @@ export const registerUser = async (req, res, next) => {
 };
 
 /**
- * @route   POST /api/auth/login
- * @desc    Login user
- * @access  Public
+ * Login User
+ * POST /api/auth/login
  */
 export const loginUser = async (req, res, next) => {
     try {
+        // Validate input using loginSchema
+        loginSchema.parse(req.body);
+
         const { email, password } = req.body;
 
-        if (!email || !password) {
-            return res.status(400).json({
-                success: false,
-                message: "Email and password are required",
-            });
-        }
-
+        // Find user and explicitly select password field
         const user = await User.findOne({ email }).select("+password");
 
-        if (!user || !(await user.comparePassword(password))) {
+        if (!user) {
+            console.log(`Login failed: User not found for email: ${email}`);
             return res.status(401).json({
                 success: false,
                 message: "Invalid email or password",
             });
         }
 
+        // Debug password verification
+        const isPasswordValid = await user.comparePassword(password);
+        console.log(`Password verification result for ${email}:`, isPasswordValid);
+        
+        if (!isPasswordValid) {
+            console.log(`Login failed: Invalid password for email: ${email}`);
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password",
+            });
+        }
+
+        // Update last login time
         user.lastLogin = new Date();
         await user.save({ validateBeforeSave: false });
 
@@ -113,7 +117,16 @@ export const loginUser = async (req, res, next) => {
                 role: user.role,
             },
         });
+
+        console.log(`Login successful for user: ${email}`);
     } catch (error) {
+        if (error.name === "ZodError") {
+            return res.status(400).json({
+                success: false,
+                message: error.errors[0].message,
+            });
+        }
+        console.error("Login error:", error);
         next(error);
     }
 };
