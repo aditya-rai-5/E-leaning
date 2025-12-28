@@ -109,7 +109,7 @@ userSchema.methods.debugPassword = function() {
 };
 
 // Create indexes for better performance
-userSchema.index({ email: 1 });
+// userSchema.index({ email: 1 });
 userSchema.index({ createdAt: -1 });
 
 const User = mongoose.model("User", userSchema);

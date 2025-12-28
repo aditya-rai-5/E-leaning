@@ -63,7 +63,7 @@ export const isAuth = (req, res, next) => {
 };
 
 export const isInstructor = (req, res, next) => {
-    if (req.user.role !== "instructor") {
+    if (req.user.role !== "Instructor") {
         return res.status(403).json({
             success: false,
             message: "Access denied"
