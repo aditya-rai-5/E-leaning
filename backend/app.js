@@ -3,7 +3,7 @@ import authRoutes from "./routes/auth.routes.js";
 import createcourseRoutes from "./routes/course.routes.js";
 import sectionRoutes from "./routes/section.routes.js";
 import lessonRoutes from "./routes/lesson.routes.js";
-import courseRoutes from "./routes/otuline.routes.js"
+import courseRoutes from "./routes/outline.routes.js"
 const app = express();
 
 app.use(express.json());
