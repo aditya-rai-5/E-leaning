@@ -8,10 +8,10 @@ const sectionSchema = new mongoose.Schema(
             trim: true,
         },
         courseId: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
             required: true,
             index: true,
-            ref: "course",
+            ref: "Course",
         },
         order: {
             type: Number,

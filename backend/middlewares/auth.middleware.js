@@ -66,8 +66,27 @@ export const isInstructor = (req, res, next) => {
     if (req.user.role !== "Instructor") {
         return res.status(403).json({
             success: false,
-            message: "Access denied"
+            message: "Access denied - Instructor role required"
         });
     }
+    next();
+};
+
+// Enhanced instructor middleware with verification check
+export const isVerifiedInstructor = (req, res, next) => {
+    if (req.user.role !== "Instructor") {
+        return res.status(403).json({
+            success: false,
+            message: "Access denied - Instructor role required"
+        });
+    }
+    
+    if (!req.user.isVerified) {
+        return res.status(403).json({
+            success: false,
+            message: "Access denied - Instructor account must be verified"
+        });
+    }
+    
     next();
 };
