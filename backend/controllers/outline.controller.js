@@ -8,14 +8,24 @@ export const getCourseOutline = async (req, res) => {
           const { courseId } = req.params;
           const userId = req.user?._id;
 
-          // Debug info (remove in production)
-          console.log("[Outline API] CourseId:", courseId, "Type:", typeof courseId);
-          console.log("[Outline API] UserId:", userId, "Type:", typeof userId);
-          console.log("[Outline API] UserRole:", req.user?.role);
+          // Validate courseId is provided
+          if (!courseId) {
+               return res.status(400).json({
+                    success: false,
+                    message: "Course ID is required"
+               });
+          }
+
+          // Validate ObjectId format
+          if (!mongoose.Types.ObjectId.isValid(courseId)) {
+               return res.status(400).json({
+                    success: false,
+                    message: "Invalid course ID format"
+               });
+          }
 
           // Convert courseId to ObjectId for consistent querying
           const courseObjectId = new mongoose.Types.ObjectId(courseId);
-          console.log("[Outline API] CourseObjectId:", courseObjectId);
 
           // 1. Fetch course
           const course = await Course.findById(courseObjectId).select(
@@ -23,22 +33,16 @@ export const getCourseOutline = async (req, res) => {
           );
 
           if (!course) {
-               console.log("[Outline API] Course not found");
                return res.status(404).json({
                     success: false,
                     message: `Course not found with ID: ${courseId}`
                });
           }
 
-          console.log("[Outline API] Course found:", course._id, course.title);
-
           // 2. Ownership check (instructor-only for now)
           const courseInstructorId = course.instructorId?.toString();
-          console.log("[Outline API] Course InstructorId:", courseInstructorId);
-          console.log("[Outline API] User ID from token:", userId?.toString());
 
           if (courseInstructorId !== userId?.toString()) {
-               console.log("[Outline API] Authorization failed - instructor mismatch");
                return res.status(403).json({
                     success: false,
                     message: "Not authorized - you do not own this course",
@@ -50,24 +54,14 @@ export const getCourseOutline = async (req, res) => {
           }
 
           // 3. Fetch sections
-          console.log("[Outline API] Querying sections with courseObjectId:", courseObjectId);
           const sections = await Section.find({ courseId: courseObjectId })
                .sort({ order: 1 })
                .lean();
-          console.log("[Outline API] Sections found:", sections.length);
-          if (sections.length > 0) {
-               console.log("[Outline API] Sections data:", JSON.stringify(sections, null, 2));
-          }
 
           // 4. Fetch lessons
-          console.log("[Outline API] Querying lessons with courseObjectId:", courseObjectId);
           const lessons = await Lesson.find({ courseId: courseObjectId })
                .sort({ order: 1 })
                .lean();
-          console.log("[Outline API] Lessons found:", lessons.length);
-          if (lessons.length > 0) {
-               console.log("[Outline API] Lessons data:", JSON.stringify(lessons, null, 2));
-          }
 
           // 5. Group lessons by sectionId
           const lessonMap = {};
@@ -84,7 +78,6 @@ export const getCourseOutline = async (req, res) => {
                     attachments: lesson.attachments
                });
           }
-          console.log("[Outline API] Lesson map keys:", Object.keys(lessonMap));
 
           // 6. Build sections structure
           let structuredSections = [];
@@ -100,11 +93,9 @@ export const getCourseOutline = async (req, res) => {
           } else if (lessons.length > 0) {
                // Edge case: no sections but lessons exist
                // Group lessons by their sectionId and create sections dynamically
-               console.log("[Outline API] No sections found, grouping lessons by sectionId");
                
                // Get unique sectionIds from lessons
                const uniqueSectionIds = [...new Set(lessons.map(l => l.sectionId.toString()))];
-               console.log("[Outline API] Unique sectionIds from lessons:", uniqueSectionIds);
                
                // Create a section for each unique sectionId found in lessons
                structuredSections = uniqueSectionIds.map((sectionId, index) => ({
@@ -114,8 +105,6 @@ export const getCourseOutline = async (req, res) => {
                     lessons: lessonMap[sectionId] || []
                }));
           }
-
-          console.log("[Outline API] Structured sections count:", structuredSections.length);
 
           return res.status(200).json({
                success: true,
