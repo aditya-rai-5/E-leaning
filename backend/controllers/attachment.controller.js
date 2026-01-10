@@ -1,10 +1,9 @@
 import Lesson from "../models/lesson.model.js";
 import Course from "../models/course.model.js";
-import { success } from "zod";
 
 export const addAttachment = async (req, res) => {
      try {
-          const lessonId = req.params;
+          const lessonId = req.params.lessonId;  // Fixed: extract lessonId from params
           const { title, url, fileType, size } = req.body;
 
           if (!title || !url) {
@@ -16,7 +15,7 @@ export const addAttachment = async (req, res) => {
 
           const lesson = await Lesson.findById(lessonId);
           if (!lesson) {
-               return res.status(404).res({
+               return res.status(404).json({  // Fixed: .json() instead of .res()
                     success: false,
                     message: "lesson not found"
                });
@@ -24,14 +23,14 @@ export const addAttachment = async (req, res) => {
 
           const course = await Course.findById(lesson.courseId);
           if (!course) {
-               return res.status(404).res({
+               return res.status(404).json({  // Fixed: .json() instead of .res()
                     success: false,
                     message: "course not found"
                });
           };
 
           if (course.instructorId.toString() != req.user._id.toString()) {
-               return req.status(403).json({
+               return res.status(403).json({  // Fixed: res.status() instead of req.status()
                     success: false,
                     message: "unauthorized"
                });
