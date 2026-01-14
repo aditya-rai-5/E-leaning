@@ -19,11 +19,11 @@ router.post(
     publishCourse
 );
 
-router.get(
-    "/courses/:courseId/student-outline",
-    protect,
-    isAuth,
-    getStudentOutline,
-);
+// router.get(
+//     "/courses/:courseId/student-outline",
+//     protect,
+//     isAuth,
+//     getStudentOutline,
+// );
 
 export default router;
