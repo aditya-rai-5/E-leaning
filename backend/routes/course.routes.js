@@ -1,11 +1,11 @@
 import express from "express"
-import { createCourse, publishCourse } from "../controllers/course.controller.js"
+import { createCourse, publishCourse, getStudentOutline } from "../controllers/course.controller.js"
 import { protect, isAuth, isInstructor } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
 router.post(
-    "/",
+    "/create-course",
     protect,
     isInstructor,
     createCourse
@@ -13,10 +13,17 @@ router.post(
 
 
 router.post(
-    "/:courseId/publish",
+    "/courses/:courseId/publish",
     protect,
     isInstructor,
     publishCourse
+);
+
+router.get(
+    "/courses/:courseId/student-outline",
+    protect,
+    isAuth,
+    getStudentOutline,
 );
 
 export default router;
